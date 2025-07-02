@@ -8,7 +8,8 @@ router.get('/', (req, res) => {
     status: 'healthy',
     service: 'users-service',
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env.npm_package_version || '1.0.0',
+    message: 'Users service is running smoothly! 🚀'
   });
 });
 

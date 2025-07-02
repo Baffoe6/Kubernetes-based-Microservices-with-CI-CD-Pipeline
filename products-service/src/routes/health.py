@@ -12,7 +12,8 @@ def health_check():
         'status': 'healthy',
         'service': 'products-service',
         'timestamp': datetime.utcnow().isoformat(),
-        'version': '1.0.0'
+        'version': '1.0.0',
+        'message': 'Products service is running perfectly! 🎯'
     })
 
 @health_bp.route('/ready', methods=['GET'])
