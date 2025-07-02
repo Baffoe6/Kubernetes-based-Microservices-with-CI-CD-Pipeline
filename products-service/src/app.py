@@ -17,8 +17,9 @@ def create_app():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     
-    # Initialize database
-    init_database()
+    # Initialize database only if not in testing mode
+    if not os.environ.get('TESTING'):
+        init_database()
     
     # Register blueprints
     app.register_blueprint(health_bp, url_prefix='/health')
