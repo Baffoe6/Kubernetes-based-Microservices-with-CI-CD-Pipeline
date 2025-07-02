@@ -1,0 +1,51 @@
+==================================================
+🔧 DOCKER HUB SECRETS SETUP - STEP BY STEP GUIDE
+==================================================
+
+⚠️  CRITICAL: Your Docker token was exposed publicly!
+You MUST regenerate it immediately for security!
+
+📋 FOLLOW THESE EXACT STEPS:
+
+1️⃣  REGENERATE DOCKER HUB TOKEN:
+   • Open: https://hub.docker.com
+   • Login with: baffoe6
+   • Go to: Account Settings → Security → Access Tokens
+   • DELETE the old exposed token
+   • Create new token:
+     - Name: GitHub Actions
+     - Permissions: Read, Write, Delete
+   • COPY the new token (starts with dckr_pat_)
+
+2️⃣  ADD SECRETS TO GITHUB:
+   • Open: https://github.com/Baffoe6/Kubernetes-based-Microservices-with-CI-CD-Pipeline/settings/secrets/actions
+   • Click: 'New repository secret'
+   
+   Add Secret #1:
+   Name: DOCKER_USERNAME
+   Value: baffoe6
+   
+   Add Secret #2:
+   Name: DOCKER_PASSWORD
+   Value: [paste your NEW token here]
+
+3️⃣  VERIFY SETUP:
+   • Go to Actions tab in your GitHub repo
+   • Run the 'Test Docker Secrets' workflow manually
+   • Or push a commit to trigger the main CI/CD pipeline
+
+✅ Expected Results:
+   • Docker login should succeed
+   • Images will be pushed to:
+     - baffoe6/users-service:latest
+     - baffoe6/products-service:latest
+
+🔗 Quick Links:
+   Docker Hub: https://hub.docker.com
+   GitHub Secrets: https://github.com/Baffoe6/Kubernetes-based-Microservices-with-CI-CD-Pipeline/settings/secrets/actions
+
+❓ Need Help?
+   If you're still having issues after setting up the secrets,
+   check the GitHub Actions logs for more detailed error messages.
+
+==================================================

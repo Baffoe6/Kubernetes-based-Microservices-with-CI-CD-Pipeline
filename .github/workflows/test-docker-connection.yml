@@ -1,0 +1,65 @@
+name: 🔍 Test Docker Hub Connection
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  check-docker-secrets:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 📋 Check Docker Hub Secrets Status
+      run: |
+        echo "=================================================="
+        echo "🔍 DOCKER HUB SECRETS VERIFICATION"
+        echo "=================================================="
+        echo ""
+        
+        if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+          echo "❌ DOCKER_USERNAME secret is NOT SET"
+          echo "   → Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+          echo "   → Add secret: DOCKER_USERNAME = baffoe6"
+        else
+          echo "✅ DOCKER_USERNAME secret is SET"
+        fi
+        
+        if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+          echo "❌ DOCKER_PASSWORD secret is NOT SET"
+          echo "   → Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+          echo "   → Add secret: DOCKER_PASSWORD = [your Docker Hub token]"
+        else
+          echo "✅ DOCKER_PASSWORD secret is SET"
+        fi
+        
+        echo ""
+        if [ -n "${{ secrets.DOCKER_USERNAME }}" ] && [ -n "${{ secrets.DOCKER_PASSWORD }}" ]; then
+          echo "🎉 Both secrets are configured! Testing Docker Hub login..."
+        else
+          echo "⚠️  Please set up the missing secrets before continuing."
+          echo "📖 Instructions: https://github.com/${{ github.repository }}/blob/main/SETUP_CHECKLIST.txt"
+        fi
+
+  test-docker-login:
+    runs-on: ubuntu-latest
+    needs: check-docker-secrets
+    if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
+    steps:
+    - name: 🔐 Test Docker Hub Login
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: 🎉 Login Success
+      run: |
+        echo "=================================================="
+        echo "✅ SUCCESS! Docker Hub login working perfectly!"
+        echo "=================================================="
+        echo ""
+        echo "Your CI/CD pipeline will now be able to:"
+        echo "• Build Docker images"
+        echo "• Push to Docker Hub as:"
+        echo "  - baffoe6/users-service:latest"
+        echo "  - baffoe6/products-service:latest"
+        echo "• Run security scans with Trivy"
+        echo ""
+        echo "🚀 Ready to run the full CI/CD pipeline!"
