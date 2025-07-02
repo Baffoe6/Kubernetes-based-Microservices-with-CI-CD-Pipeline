@@ -9,8 +9,8 @@ on:
 env:
   REGISTRY: ghcr.io
   DOCKER_USERNAME: ${{ github.actor }}
-  USERS_SERVICE_IMAGE: ghcr.io/${{ github.repository_owner }}/users-service
-  PRODUCTS_SERVICE_IMAGE: ghcr.io/${{ github.repository_owner }}/products-service
+  USERS_SERVICE_IMAGE: ghcr.io/baffoe6/users-service
+  PRODUCTS_SERVICE_IMAGE: ghcr.io/baffoe6/products-service
 
 jobs:
   test:
@@ -119,10 +119,15 @@ jobs:
         service: [users-service, products-service]
     
     steps:
+    - name: Wait for image to be available
+      run: |
+        echo "Waiting for Docker image to be available in registry..."
+        sleep 30
+        
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
+        image-ref: ghcr.io/baffoe6/${{ matrix.service }}:latest
         format: 'sarif'
         output: 'trivy-results.sarif'
 
@@ -157,9 +162,9 @@ jobs:
         helm upgrade --install microservices-staging ./helm/microservices \
           --namespace microservices-staging \
           --create-namespace \
-          --set usersService.image.repository=ghcr.io/${{ github.repository_owner }}/users-service \
+          --set usersService.image.repository=ghcr.io/baffoe6/users-service \
           --set usersService.image.tag=sha-${{ github.sha }} \
-          --set productsService.image.repository=ghcr.io/${{ github.repository_owner }}/products-service \
+          --set productsService.image.repository=ghcr.io/baffoe6/products-service \
           --set productsService.image.tag=sha-${{ github.sha }} \
           --wait
 
@@ -195,9 +200,9 @@ jobs:
         helm upgrade --install microservices ./helm/microservices \
           --namespace microservices \
           --create-namespace \
-          --set usersService.image.repository=ghcr.io/${{ github.repository_owner }}/users-service \
+          --set usersService.image.repository=ghcr.io/baffoe6/users-service \
           --set usersService.image.tag=sha-${{ github.sha }} \
-          --set productsService.image.repository=ghcr.io/${{ github.repository_owner }}/products-service \
+          --set productsService.image.repository=ghcr.io/baffoe6/products-service \
           --set productsService.image.tag=sha-${{ github.sha }} \
           --wait
 
