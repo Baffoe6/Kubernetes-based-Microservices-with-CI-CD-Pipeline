@@ -3,8 +3,14 @@ import sys
 import json
 from unittest.mock import patch, Mock
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add the src directory to the Python path in a more robust way
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+src_dir = os.path.join(project_root, 'src')
+
+# Ensure the src directory is in the Python path
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 # Set testing environment
 os.environ['TESTING'] = 'true'
@@ -12,7 +18,7 @@ os.environ['TESTING'] = 'true'
 def test_health_endpoint():
     """Test the health endpoint"""
     with patch('config.database.init_database'):
-        from src.app import create_app
+        from app import create_app
         app = create_app()
         app.config['TESTING'] = True
         client = app.test_client()
@@ -27,7 +33,7 @@ def test_health_endpoint():
 def test_liveness_endpoint():
     """Test the liveness endpoint"""
     with patch('config.database.init_database'):
-        from src.app import create_app
+        from app import create_app
         app = create_app()
         app.config['TESTING'] = True
         client = app.test_client()
@@ -41,7 +47,7 @@ def test_liveness_endpoint():
 def test_404_error_handler():
     """Test 404 error handler"""
     with patch('config.database.init_database'):
-        from src.app import create_app
+        from app import create_app
         app = create_app()
         app.config['TESTING'] = True
         client = app.test_client()
@@ -72,7 +78,7 @@ def test_products_get_empty():
     
     with patch('config.database.init_database'), \
          patch('config.database.get_database', return_value=mock_database):
-        from src.app import create_app
+        from app import create_app
         app = create_app()
         app.config['TESTING'] = True
         client = app.test_client()
@@ -89,7 +95,7 @@ def test_products_get_empty():
 def test_products_post_validation():
     """Test product creation validation"""
     with patch('config.database.init_database'):
-        from src.app import create_app
+        from app import create_app
         app = create_app()
         app.config['TESTING'] = True
         client = app.test_client()
