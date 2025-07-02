@@ -36,15 +36,22 @@ app.use('*', (req, res) => {
 async function startServer() {
   try {
     await initDatabase();
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Users service running on port ${PORT}`);
     });
+    return server;
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
+    throw error;
   }
 }
 
-startServer();
+// Only start the server if this file is run directly (not imported by tests)
+if (require.main === module) {
+  startServer();
+}
 
 module.exports = app;

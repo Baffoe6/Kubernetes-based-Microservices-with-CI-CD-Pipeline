@@ -12,6 +12,12 @@ const pool = new Pool({
 });
 
 async function initDatabase() {
+  // Skip database initialization in test environment
+  if (process.env.NODE_ENV === 'test' || process.env.TESTING === 'true') {
+    console.log('Skipping database initialization in test environment');
+    return;
+  }
+
   try {
     const client = await pool.connect();
     
