@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline (GitHub Container Registry)
 
 on:
   push:
@@ -7,10 +7,9 @@ on:
     branches: [ main ]
 
 env:
-  REGISTRY: docker.io
-  DOCKER_USERNAME: baffoe6
-  USERS_SERVICE_IMAGE: baffoe6/users-service
-  PRODUCTS_SERVICE_IMAGE: baffoe6/products-service
+  REGISTRY: ghcr.io
+  USERS_SERVICE_IMAGE: users-service
+  PRODUCTS_SERVICE_IMAGE: products-service
 
 jobs:
   test:
@@ -67,6 +66,10 @@ jobs:
       matrix:
         service: [users-service, products-service]
     
+    permissions:
+      contents: read
+      packages: write
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -74,18 +77,18 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Log in to Docker Hub
+    - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: |
-          ${{ matrix.service == 'users-service' && env.USERS_SERVICE_IMAGE || env.PRODUCTS_SERVICE_IMAGE }}
+        images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service }}
         tags: |
           type=ref,event=branch
           type=ref,event=pr
@@ -110,11 +113,16 @@ jobs:
       matrix:
         service: [users-service, products-service]
     
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    
     steps:
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ env.REGISTRY }}/${{ matrix.service }}:latest
+        image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service }}:latest
         format: 'sarif'
         output: 'trivy-results.sarif'
 
@@ -149,15 +157,11 @@ jobs:
         helm upgrade --install microservices-staging ./helm/microservices \
           --namespace microservices-staging \
           --create-namespace \
+          --set usersService.image.repository=${{ env.REGISTRY }}/${{ github.repository_owner }}/users-service \
           --set usersService.image.tag=sha-${{ github.sha }} \
+          --set productsService.image.repository=${{ env.REGISTRY }}/${{ github.repository_owner }}/products-service \
           --set productsService.image.tag=sha-${{ github.sha }} \
-          --wait
-
-    - name: Run health checks
-      run: |
-        export KUBECONFIG=kubeconfig
-        kubectl wait --for=condition=ready pod -l app=users-service -n microservices-staging --timeout=300s
-        kubectl wait --for=condition=ready pod -l app=products-service -n microservices-staging --timeout=300s
+          --set environment=staging
 
   deploy-production:
     needs: [build, security-scan]
@@ -182,23 +186,13 @@ jobs:
     - name: Deploy to production
       run: |
         export KUBECONFIG=kubeconfig
-        helm upgrade --install microservices ./helm/microservices \
-          --namespace microservices \
+        helm upgrade --install microservices-prod ./helm/microservices \
+          --namespace microservices-production \
           --create-namespace \
+          --set usersService.image.repository=${{ env.REGISTRY }}/${{ github.repository_owner }}/users-service \
           --set usersService.image.tag=sha-${{ github.sha }} \
+          --set productsService.image.repository=${{ env.REGISTRY }}/${{ github.repository_owner }}/products-service \
           --set productsService.image.tag=sha-${{ github.sha }} \
-          --wait
-
-    - name: Run health checks
-      run: |
-        export KUBECONFIG=kubeconfig
-        kubectl wait --for=condition=ready pod -l app=users-service -n microservices --timeout=300s
-        kubectl wait --for=condition=ready pod -l app=products-service -n microservices --timeout=300s
-
-    - name: Notify deployment
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        channel: '#deployments'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-      if: always()
+          --set environment=production \
+          --set usersService.replicas=3 \
+          --set productsService.replicas=3
