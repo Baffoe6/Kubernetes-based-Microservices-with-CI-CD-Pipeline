@@ -7,10 +7,10 @@ on:
     branches: [ main ]
 
 env:
-  REGISTRY: docker.io
-  DOCKER_USERNAME: baffoe6
-  USERS_SERVICE_IMAGE: baffoe6/users-service
-  PRODUCTS_SERVICE_IMAGE: baffoe6/products-service
+  REGISTRY: ghcr.io
+  DOCKER_USERNAME: ${{ github.actor }}
+  USERS_SERVICE_IMAGE: ghcr.io/${{ github.repository_owner }}/users-service
+  PRODUCTS_SERVICE_IMAGE: ghcr.io/${{ github.repository_owner }}/products-service
 
 jobs:
   test:
@@ -63,6 +63,9 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         service: [users-service, products-service]
@@ -74,11 +77,12 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Log in to Docker Hub
+    - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Extract metadata
       id: meta
@@ -106,6 +110,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
     strategy:
       matrix:
         service: [users-service, products-service]
@@ -114,7 +122,7 @@ jobs:
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: baffoe6/${{ matrix.service }}:latest
+        image-ref: ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
         format: 'sarif'
         output: 'trivy-results.sarif'
 
@@ -149,9 +157,9 @@ jobs:
         helm upgrade --install microservices-staging ./helm/microservices \
           --namespace microservices-staging \
           --create-namespace \
-          --set usersService.image.repository=baffoe6/users-service \
+          --set usersService.image.repository=ghcr.io/${{ github.repository_owner }}/users-service \
           --set usersService.image.tag=sha-${{ github.sha }} \
-          --set productsService.image.repository=baffoe6/products-service \
+          --set productsService.image.repository=ghcr.io/${{ github.repository_owner }}/products-service \
           --set productsService.image.tag=sha-${{ github.sha }} \
           --wait
 
@@ -187,9 +195,9 @@ jobs:
         helm upgrade --install microservices ./helm/microservices \
           --namespace microservices \
           --create-namespace \
-          --set usersService.image.repository=baffoe6/users-service \
+          --set usersService.image.repository=ghcr.io/${{ github.repository_owner }}/users-service \
           --set usersService.image.tag=sha-${{ github.sha }} \
-          --set productsService.image.repository=baffoe6/products-service \
+          --set productsService.image.repository=ghcr.io/${{ github.repository_owner }}/products-service \
           --set productsService.image.tag=sha-${{ github.sha }} \
           --wait
 
