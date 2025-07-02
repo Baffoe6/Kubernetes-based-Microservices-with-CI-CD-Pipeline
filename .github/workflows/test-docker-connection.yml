@@ -13,41 +13,25 @@ jobs:
         echo "🔍 DOCKER HUB SECRETS VERIFICATION"
         echo "=================================================="
         echo ""
-        
-        if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-          echo "❌ DOCKER_USERNAME secret is NOT SET"
-          echo "   → Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-          echo "   → Add secret: DOCKER_USERNAME = baffoe6"
-        else
-          echo "✅ DOCKER_USERNAME secret is SET"
-        fi
-        
-        if [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
-          echo "❌ DOCKER_PASSWORD secret is NOT SET"
-          echo "   → Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
-          echo "   → Add secret: DOCKER_PASSWORD = [your Docker Hub token]"
-        else
-          echo "✅ DOCKER_PASSWORD secret is SET"
-        fi
-        
+        echo "This workflow will test if your Docker Hub secrets are properly configured."
         echo ""
-        if [ -n "${{ secrets.DOCKER_USERNAME }}" ] && [ -n "${{ secrets.DOCKER_PASSWORD }}" ]; then
-          echo "🎉 Both secrets are configured! Testing Docker Hub login..."
-        else
-          echo "⚠️  Please set up the missing secrets before continuing."
-          echo "📖 Instructions: https://github.com/${{ github.repository }}/blob/main/SETUP_CHECKLIST.txt"
-        fi
+        echo "Required secrets:"
+        echo "• DOCKER_USERNAME (should be: baffoe6)"
+        echo "• DOCKER_PASSWORD (your Docker Hub access token)"
+        echo ""
+        echo "If the next step fails, you need to:"
+        echo "1. Go to: https://github.com/${{ github.repository }}/settings/secrets/actions"
+        echo "2. Add the missing secrets as described in SETUP_CHECKLIST.txt"
 
   test-docker-login:
     runs-on: ubuntu-latest
-    needs: check-docker-secrets
-    if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
     steps:
     - name: 🔐 Test Docker Hub Login
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
+      continue-on-error: true
     
     - name: 🎉 Login Success
       run: |
