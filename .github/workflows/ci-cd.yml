@@ -137,87 +137,88 @@ jobs:
   #     with:
   #       sarif_file: 'trivy-results.sarif'
 
-  deploy-staging:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
-    environment: staging
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  # Deployment stages temporarily disabled - will be enabled once Kubernetes clusters are set up
+  # deploy-staging:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/develop'
+  #   environment: staging
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #
+  #   - name: Set up kubectl
+  #     uses: azure/setup-kubectl@v3
+  #     with:
+  #       version: 'latest'
+  #
+  #   - name: Configure kubectl
+  #     run: |
+  #       echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
+  #       export KUBECONFIG=kubeconfig
+  #
+  #   - name: Deploy to staging
+  #     run: |
+  #       export KUBECONFIG=kubeconfig
+  #       helm upgrade --install microservices-staging ./helm/microservices \
+  #         --namespace microservices-staging \
+  #         --create-namespace \
+  #         --set usersService.image.repository=ghcr.io/baffoe6/users-service \
+  #         --set usersService.image.tag=sha-${{ github.sha }} \
+  #         --set productsService.image.repository=ghcr.io/baffoe6/products-service \
+  #         --set productsService.image.tag=sha-${{ github.sha }} \
+  #         --wait
+  #
+  #   - name: Run health checks
+  #     run: |
+  #       export KUBECONFIG=kubeconfig
+  #       kubectl wait --for=condition=ready pod -l app=users-service -n microservices-staging --timeout=300s
+  #       kubectl wait --for=condition=ready pod -l app=products-service -n microservices-staging --timeout=300s
 
-    - name: Set up kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'latest'
-
-    - name: Configure kubectl
-      run: |
-        echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
-        export KUBECONFIG=kubeconfig
-
-    - name: Deploy to staging
-      run: |
-        export KUBECONFIG=kubeconfig
-        helm upgrade --install microservices-staging ./helm/microservices \
-          --namespace microservices-staging \
-          --create-namespace \
-          --set usersService.image.repository=ghcr.io/baffoe6/users-service \
-          --set usersService.image.tag=sha-${{ github.sha }} \
-          --set productsService.image.repository=ghcr.io/baffoe6/products-service \
-          --set productsService.image.tag=sha-${{ github.sha }} \
-          --wait
-
-    - name: Run health checks
-      run: |
-        export KUBECONFIG=kubeconfig
-        kubectl wait --for=condition=ready pod -l app=users-service -n microservices-staging --timeout=300s
-        kubectl wait --for=condition=ready pod -l app=products-service -n microservices-staging --timeout=300s
-
-  deploy-production:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment: production
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'latest'
-
-    - name: Configure kubectl
-      run: |
-        echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > kubeconfig
-        export KUBECONFIG=kubeconfig
-
-    - name: Deploy to production
-      run: |
-        export KUBECONFIG=kubeconfig
-        helm upgrade --install microservices ./helm/microservices \
-          --namespace microservices \
-          --create-namespace \
-          --set usersService.image.repository=ghcr.io/baffoe6/users-service \
-          --set usersService.image.tag=sha-${{ github.sha }} \
-          --set productsService.image.repository=ghcr.io/baffoe6/products-service \
-          --set productsService.image.tag=sha-${{ github.sha }} \
-          --wait
-
-    - name: Run health checks
-      run: |
-        export KUBECONFIG=kubeconfig
-        kubectl wait --for=condition=ready pod -l app=users-service -n microservices --timeout=300s
-        kubectl wait --for=condition=ready pod -l app=products-service -n microservices --timeout=300s
-
-    # Slack notification disabled for now - uncomment and configure SLACK_WEBHOOK secret if needed
-    # - name: Notify deployment
-    #   uses: 8398a7/action-slack@v3
-    #   with:
-    #     status: ${{ job.status }}
-    #     channel: '#deployments'
-    #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-    #   if: always()
+  # deploy-production:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   environment: production
+  #   
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #
+  #   - name: Set up kubectl
+  #     uses: azure/setup-kubectl@v3
+  #     with:
+  #       version: 'latest'
+  #
+  #   - name: Configure kubectl
+  #     run: |
+  #       echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > kubeconfig
+  #       export KUBECONFIG=kubeconfig
+  #
+  #   - name: Deploy to production
+  #     run: |
+  #       export KUBECONFIG=kubeconfig
+  #       helm upgrade --install microservices ./helm/microservices \
+  #         --namespace microservices \
+  #         --create-namespace \
+  #         --set usersService.image.repository=ghcr.io/baffoe6/users-service \
+  #         --set usersService.image.tag=sha-${{ github.sha }} \
+  #         --set productsService.image.repository=ghcr.io/baffoe6/products-service \
+  #         --set productsService.image.tag=sha-${{ github.sha }} \
+  #         --wait
+  #
+  #   - name: Run health checks
+  #     run: |
+  #       export KUBECONFIG=kubeconfig
+  #       kubectl wait --for=condition=ready pod -l app=users-service -n microservices --timeout=300s
+  #       kubectl wait --for=condition=ready pod -l app=products-service -n microservices --timeout=300s
+  #
+  #   # Slack notification disabled for now - uncomment and configure SLACK_WEBHOOK secret if needed
+  #   # - name: Notify deployment
+  #   #   uses: 8398a7/action-slack@v3
+  #   #   with:
+  #   #     status: ${{ job.status }}
+  #   #     channel: '#deployments'
+  #   #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+  #   #   if: always()
